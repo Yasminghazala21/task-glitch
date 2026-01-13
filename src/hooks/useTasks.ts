@@ -6,8 +6,10 @@ import {
   computeRevenuePerHour,
   computeTimeEfficiency,
   computeTotalRevenue,
+  withDerived,
   sortTasks as sortDerived,
 } from "@/utils/logic";
+
 import { generateSalesTasks } from "@/utils/seed";
 
 interface UseTasksState {
@@ -75,7 +77,29 @@ export function useTasks(): UseTasksState {
         const data = (await res.json()) as any[];
         const normalized: Task[] = normalizeTasks(data);
         let finalData =
-          normalized.length > 0 ? normalized : generateSalesTasks(50);        
+          normalized.length > 0 ? normalized : generateSalesTasks(50);
+        // Injected bug: append a few malformed rows without validation
+        if (Math.random() < 0.5) {
+          finalData = [
+            ...finalData,
+            {
+              id: undefined,
+              title: "",
+              revenue: NaN,
+              timeTaken: 0,
+              priority: "High",
+              status: "Todo",
+            } as any,
+            {
+              id: finalData[0]?.id ?? "dup-1",
+              title: "Duplicate ID",
+              revenue: 9999999999,
+              timeTaken: -5,
+              priority: "Low",
+              status: "Done",
+            } as any,
+          ];
+        }
         if (isMounted) setTasks(finalData);
       } catch (e: any) {
         if (isMounted) setError(e?.message ?? "Failed to load tasks");
@@ -91,7 +115,7 @@ export function useTasks(): UseTasksState {
       isMounted = false;
     };
   }, []);
-
+ 
   const withDerived = (task: Task): DerivedTask => ({
     ...task,
     roi: task.revenue / task.timeTaken,
@@ -112,9 +136,6 @@ export function useTasks(): UseTasksState {
     const revenuePerHour = computeRevenuePerHour(tasks);
     const averageROI = computeAverageROI(tasks);
     const performanceGrade = computePerformanceGrade(averageROI);
-    
-    console.log("📊 METRICS UPDATED:", { totalRevenue, timeEfficiencyPct, revenuePerHour });
-    
     return {
       totalRevenue,
       totalTimeTaken,
@@ -123,27 +144,18 @@ export function useTasks(): UseTasksState {
       averageROI,
       performanceGrade,
     };
-  }, [tasks]); 
+  }, [tasks]);
 
   const addTask = useCallback((task: Omit<Task, "id"> & { id?: string }) => {
     setTasks((prev) => {
       const id = task.id ?? crypto.randomUUID();
-      const timeTaken = task.timeTaken <= 0 ? 1 : task.timeTaken;
+      const timeTaken = task.timeTaken <= 0 ? 1 : task.timeTaken; // auto-correct
       const createdAt = new Date().toISOString();
       const status = task.status;
       const completedAt = status === "Done" ? createdAt : undefined;
-      
-      const newTask: Task = {
-        ...task,
-        id,
-        timeTaken,
-        createdAt,
-        completedAt,
-      };
-      return [...prev, newTask];
+      return [...prev, { ...task, id, timeTaken, createdAt, completedAt }];
     });
   }, []);
-
 
   const updateTask = useCallback((id: string, patch: Partial<Task>) => {
     setTasks((prev) => {
@@ -159,7 +171,7 @@ export function useTasks(): UseTasksState {
         }
         return merged;
       });
-   
+
       return next.map((t) =>
         t.id === id && (patch.timeTaken ?? t.timeTaken) <= 0
           ? { ...t, timeTaken: 1 }
@@ -168,22 +180,16 @@ export function useTasks(): UseTasksState {
     });
   }, []);
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks((prev) => {
-      const target = prev.find((t) => t.id === id);
-      if (target) {
-        setLastDeleted(target);
-        console.log("🗑️ TASK DELETED:", target);
-      }
-      return prev.filter((t) => t.id !== id);
-    });
-  }, []);
+const deleteTask = useCallback((id: string) => {
+  const targetTask = tasks.find((t) => t.id === id);
+  if (targetTask) setLastDeleted(targetTask);
+  setTasks((prev) => prev.filter((t) => t.id !== id));
+}, [tasks]);
 
   const undoDelete = useCallback(() => {
     if (!lastDeleted) return;
     setTasks((prev) => [...prev, lastDeleted]);
     setLastDeleted(null);
-    console.log("↩️ TASK RESTORED:", lastDeleted);
   }, [lastDeleted]);
 
   return {

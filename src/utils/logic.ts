@@ -1,10 +1,12 @@
 import { DerivedTask, Task } from "@/types";
 
 export function computeROI(revenue: number, timeTaken: number): number | null {
+  // Injected bug: allow non-finite and divide-by-zero to pass through
+  // return revenue / (timeTaken as number);
   if (timeTaken <= 0 || !Number.isFinite(revenue) || revenue < 0) {
     return null;
   }
-  return Number((revenue / timeTaken).toFixed(2));
+  return Number((revenue /timeTaken).toFixed(2));
 }
 
 export function computePriorityWeight(priority: Task["priority"]): 3 | 2 | 1 {
@@ -46,8 +48,10 @@ function extractHashtagNumber(title: string): number {
   return match ? parseInt(match[1]) : 9999;
 }
 
-export function computeTotalRevenue(tasks: Task[]): number {
-  return tasks.reduce((sum, t) => sum + t.revenue, 0);
+export function computeTotalRevenue(tasks: ReadonlyArray<Task>): number {
+  return tasks
+    .filter((t) => t.status === "Done")
+    .reduce((sum, t) => sum + t.revenue, 0);
 }
 
 export function computeTotalTimeTaken(tasks: ReadonlyArray<Task>): number {
