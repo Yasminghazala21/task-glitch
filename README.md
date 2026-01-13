@@ -25,7 +25,7 @@ Build: Vite + Vercel
 
 ```bash
 # Clone & Install
-[https://github.com/Yasminghazala21/task-glitch](https://github.com/Yasminghazala21/task-glitch)
+[[https://github.com/Yasminghazala21/task-glitch](https://github.com/Yasminghazala21/task-glitch)]
 cd task-glitch
 npm install
 
