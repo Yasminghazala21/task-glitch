@@ -4,7 +4,7 @@
 *Sales pipeline analytics with live charts, ROI tracking, and full CRUD*
 
 ## ✨ **Live Demo**
-[https://task-glitch.vercel.app](https://task-glitch.vercel.app)
+[[https://task-glitch-six-mu.vercel.app/](https://task-glitch-six-mu.vercel.app/)]
 
 ## 📊 **Features**
 
@@ -25,7 +25,7 @@ Build: Vite + Vercel
 
 ```bash
 # Clone & Install
-[git clone https://github.com/YASMINDEV/task-glitch.git](https://github.com/Yasminghazala21/task-glitch)
+[https://github.com/Yasminghazala21/task-glitch](https://github.com/Yasminghazala21/task-glitch)
 cd task-glitch
 npm install
 
